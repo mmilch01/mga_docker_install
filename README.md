@@ -7,9 +7,13 @@ Version
 
 Installation:
 1) install docker-io: https://docs.docker.com/installation
+
 2) install MGA runtime package from https://bitbucket.org/mmilch01/mga_docker_install
+
 3) run hof_install.sh
+
 4) add mga_docker_install location to your path
+
 5) done!
 
 Documentation: 
@@ -17,6 +21,9 @@ see docs/ directory.
 
 Running:
 1) Prepare the data. Copy all DICOM files for the study to <study dir>/DICOM
+
 2) cd <study_dir>
+
 3) Run master script that attempts to automatically detect and process all available DICOM series (see docs for configuration options):
-rhof condr_preproc . 
+
+rhof condr_preproc .
