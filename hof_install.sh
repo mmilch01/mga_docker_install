@@ -11,6 +11,8 @@ docker pull xnat/hof:release
 mkdir -p ~/.hof_db
 cp DB/hofid_udescr ~/.hof_db/
 
+RT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 #set up pipeline xml.
 n=0
 while [ ! -f "$hof_path/HOF.xml" ]; do

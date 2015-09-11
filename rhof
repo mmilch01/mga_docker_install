@@ -10,16 +10,6 @@ if [ -z $1 ]; then
 	exit 0
 fi
 
-############# VM debug #################
-
-#S=/home/shared/NRG/mmilch
-#source $S/bin/CONDR/condr_setup.sh
-#args=("$*")
-#$args
-#exit
-
-############ end of VM debug ###########
-
 
 wd=`pwd`
 if [ -f "~/.hof_db/hofid_udescr" ]; then
@@ -30,14 +20,9 @@ fi
 
 d=${wd#/*}
 d=${d%%/*}
-
-#if [ -n "$d" ]; then 
-#	md=/$d
-#else
-#	md=$wd
-#fi
 md=$wd
 subd=${wd#"$md/"}
+
 
 #save arguments.
 args=("$*")
