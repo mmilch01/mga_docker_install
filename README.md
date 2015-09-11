@@ -6,6 +6,7 @@ Version
 0.1
 
 Installation:
+
 1) install docker-io: https://docs.docker.com/installation
 
 2) install MGA runtime package from https://bitbucket.org/mmilch01/mga_docker_install
@@ -17,9 +18,11 @@ Installation:
 5) done!
 
 Documentation: 
+
 see docs/ directory.
 
 Running:
+
 1) Prepare the data. Copy all DICOM files for the study to <study dir>/DICOM
 
 2) cd <study_dir>
