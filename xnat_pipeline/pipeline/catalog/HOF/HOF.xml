@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Pipeline xmlns="http://nrg.wustl.edu/pipeline" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://nrg.wustl.edu/pipeline ..\schema\pipeline.xsd" xmlns:ext="org.nrg.validate.utils.ProvenanceUtils" xmlns:fileUtils="http://www.xnat.org/java/org.nrg.imagingtools.utils.FileUtils">
+	<name>HOF</name>
+	<!--Should be the Name of the pipeline XML file -->
+	<location>HOF</location>
+	<!-- Filesystem path to the pipeline XML -->
+	<description>Heterogeneous Optimization Framework with docker.io virtualization, v. 08/05/14 </description>
+<!--	
+    <resourceRequirements>
+    	<property name="DRMAA_JobTemplate_JobCategory">nrglab_q</property>
+    </resourceRequirements>	
+-->		
+	<documentation>
+	   <authors>
+	   	<author>
+	   		<lastname>Milchenko</lastname>
+			<firstname>Mikhail</firstname>
+	   	</author>
+	   </authors>
+		<version>07282014</version>
+		<input-parameters>
+			<parameter>
+				<name>scans</name>
+				<values><csv>none</csv></values>
+				<description>Scan ID's to process</description>
+			</parameter>
+			<parameter>
+				<name>HOF_IDs</name>
+				<values><csv>none</csv></values>
+				<description>matching HOF ID's</description>
+			</parameter>
+			<parameter>
+				<name>Siemens_scanner</name>
+				<values><csv>1</csv></values>
+				<description>Set to 1 if Siemens MR scanner was used, 0 otherwise.</description>
+			</parameter>			
+			<parameter>
+				<name>ManualParams</name>
+				<values><csv>none</csv></values>
+				<description>Override automatic parameters, e.g. dwi_nx=256,dwi_ny=256</description>
+			</parameter>			
+			<parameter>
+				<name>CONDR_SCRIPT_PATH</name>
+				<values><csv>%HOF_HOME%</csv></values>
+				<description>Point to local MGA installation directory.</description>
+			</parameter>
+			<parameter>
+				<name>project</name>
+				<values><schemalink>xnat:mrSessionData/project</schemalink></values>
+				<description>Project</description>
+			</parameter>
+			<parameter>
+				<name>subject</name>
+				<values><schemalink>xnat:mrSessionData/subject_ID</schemalink></values>
+				<description>Subject ID</description>
+			</parameter>
+			<parameter>
+				<name>xnat_id</name>
+				<values><schemalink>xnat:mrSessionData/ID</schemalink></values>
+				<description>Experiment ID</description>
+			</parameter>
+			<parameter>
+				<name>sessionId</name>
+				<values><schemalink>xnat:mrSessionData/label</schemalink></values>
+				<description>Experiment label</description>
+			</parameter>
+			</input-parameters>
+	</documentation>
+	<xnatInfo appliesTo="xnat:mrSessionData"/>
+	<outputFileNamePrefix>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text())^</outputFileNamePrefix>
+	<!-- Description of the Pipeilne -->
+	<loop id="scanIDs" xpath="^/Pipeline/parameters/parameter[name='scans']/values/list^"/>
+	<loop id="libIDs" xpath="^/Pipeline/parameters/parameter[name='HOF_IDs']/values/list^"/>
+	<loop id="manual_params" xpath="^/Pipeline/parameters/parameter[name='ManualParams']/values/list^"/>	
+
+	<parameters>
+		<parameter>
+			<name>workdir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='builddir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text())^</unique>
+			</values>
+		</parameter>
+	</parameters>
+	<steps>
+		<step id="0" description="Convert input parameters" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+			<resource name="echo" location="commandlineTools" >	
+				<argument id="n"/>			
+				<argument id="string" >
+					<value>predef_scans=(</value>
+				</argument>
+				<argument id="redirect_stdout_append">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>		
+			<resource name="echo" location="commandlineTools" >
+				<argument id="n"/>
+				<argument id="string" >
+					<value>^PIPELINE_LOOPON(scanIDs)^</value>
+				</argument>
+				<argument id="redirect_stdout_append">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>
+			<resource name="echo" location="commandlineTools" >
+				<argument id="string" >
+					<value>)</value>
+				</argument>
+				<argument id="redirect_stdout_append">				
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>
+			<resource name="echo" location="commandlineTools" >			
+				<argument id="n"/>
+				<argument id="string" >
+					<value>predef_HOF_IDs=(</value>
+				</argument>
+				<argument id="redirect_stdout_append">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>		
+			<resource name="echo" location="commandlineTools" >
+				<argument id="n"/>
+				<argument id="string" >
+					<value>^PIPELINE_LOOPON(libIDs)^</value>
+				</argument>
+				<argument id="redirect_stdout_append">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>
+			<resource name="echo" location="commandlineTools" >
+				<argument id="string" >
+					<value>)</value>
+				</argument>
+				<argument id="redirect_stdout_append">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>
+			<resource name="echo" location="commandlineTools" >
+				<argument id="string" >
+					<value>^concat('ManualParams=\"',PIPELINE_LOOPON(manual_params),'\"')^</value>
+				</argument>
+				<argument id="redirect_stdout_append">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/scans.txt')^</value>
+				</argument>
+			</resource>									
+		</step>
+		<step id="1" description="Download and analyse DICOM" workdirectory="^/Pipeline/parameters/parameter[name='builddir']/values/unique/text()^">
+			<resource name="rhof" location="HOF/resource">
+				<argument id="command">
+					<value>xnat2loc</value>
+				</argument>
+				<argument id="arguments">
+					<value>^concat
+					(
+						/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),
+						' -sr ',/Pipeline/parameters/parameter[name='host']/values/unique/text(),
+						' -u ', /Pipeline/parameters/parameter[name='user']/values/unique/text(),
+						' -pa ', /Pipeline/parameters/parameter[name='pwd']/values/unique/text(),
+						' -pr ', /Pipeline/parameters/parameter[name='project']/values/unique/text(),
+						' -subj ', /Pipeline/parameters/parameter[name='subject']/values/unique/text(),
+						' -s ', PIPELINE_LOOPON(scanIDs),
+						' -m '
+					)^
+					</value>
+				</argument>
+			</resource>
+		</step>
+		
+		<step id="2" description="Run HOF processing and QC" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+			<resource name="rhof" location="HOF/resource">
+				<argument id="command"><value>condr_preproc</value></argument>
+				<argument id="arguments">
+					<value>^concat
+					(
+						' . ',
+						' -s ',
+						/Pipeline/parameters/parameter[name='Siemens_scanner']/values/unique/text(),
+						' -tl ', /host/scans.txt'						
+					)^
+					</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="3" description="Upload HOF processing and QC to XNAT" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+
+			<resource name="rhof" location="HOF/resource">
+				<argument id="command"><value>loc2xnat</value></argument>				
+				<argument id="arguments"><value>
+				^concat(
+						/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),
+						' reg r ',						
+						' -sr ',/Pipeline/parameters/parameter[name='host']/values/unique/text(),
+						' -u ', /Pipeline/parameters/parameter[name='user']/values/unique/text(),
+						' -pa ', /Pipeline/parameters/parameter[name='pwd']/values/unique/text(),
+						' -pr ', /Pipeline/parameters/parameter[name='project']/values/unique/text(),
+						' -subj ', /Pipeline/parameters/parameter[name='subject']/values/unique/text(),		
+						' -r HOF_reg -d'
+				)^
+				</value></argument>
+			</resource>
+			<resource name="rhof" location="HOF/resource">
+				<argument id="command"><value>loc2xnat</value></argument>
+				<argument id="arguments"><value>
+				^concat(
+						/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),
+						' QC r ',						
+						' -sr ',/Pipeline/parameters/parameter[name='host']/values/unique/text(),
+						' -u ', /Pipeline/parameters/parameter[name='user']/values/unique/text(),
+						' -pa ', /Pipeline/parameters/parameter[name='pwd']/values/unique/text(),
+						' -pr ', /Pipeline/parameters/parameter[name='project']/values/unique/text(),
+						' -subj ', /Pipeline/parameters/parameter[name='subject']/values/unique/text(),		
+						' -r HOF_QC -d'
+				)^
+				</value></argument>
+			</resource>
+		</step> 				
+
+		<step id="END-Notify" description="Notify">
+			<resource name="Notifier" location="notifications">
+                <argument id="user">
+                    <value>^/Pipeline/parameters/parameter[name='user']/values/unique/text()^</value>
+                </argument>
+                <argument id="password">
+                    <value>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</value>
+                </argument>
+				<argument id="to">
+					<value>^/Pipeline/parameters/parameter[name='useremail']/values/unique/text()^</value>
+				</argument>
+<!--				
+				<argument id="cc">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+-->				
+				<argument id="from">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="subject">
+					<value>^concat(/Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(), ' update: HOF processing completed for ',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text() )^</value>
+				</argument>
+				<argument id="host">
+					<value>^/Pipeline/parameters/parameter[name='mailhost']/values/unique/text()^</value>
+				</argument>
+				<argument id="body">
+					<value>^concat(
+					'Dear ',
+					/Pipeline/parameters/parameter[name='userfullname']/values/unique/text(),
+					',&lt;br&gt; &lt;p&gt;',
+					' HOF processing completed for  ',
+					/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),
+					'. &lt;br&gt;&lt;a href="',
+					/Pipeline/parameters/parameter[name='host']/values/unique/text(),
+					'/data/archive/projects/',
+					/Pipeline/parameters/parameter[name='project']/values/unique/text(),
+					'/subjects/',
+					/Pipeline/parameters/parameter[name='subject']/values/unique/text(),	
+					'/experiments/',					
+					/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),
+					'/resources/HOF_QC/files/',
+					/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),
+					'_qc.pdf"&gt;View QC pdf&lt;/a&gt;&lt;br&gt;',
+					'&lt;a href="',
+					/Pipeline/parameters/parameter[name='host']/values/unique/text(),					'/app/action/DisplayItemAction/search_element/xnat:mrSessionData/search_field/xnat:mrSessionData.ID/search_value/',
+					/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),
+					'"&gt;',
+					'Open session page&lt;/a&gt;&lt;/p&gt;',
+					'Sincerely yours,&lt;br&gt;',
+					'HOF artificial intelligence.'
+					)^
+					</value>
+				</argument>
+			</resource>
+		</step>
+	</steps>
+</Pipeline>

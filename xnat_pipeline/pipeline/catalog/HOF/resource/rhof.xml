@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pip:Resource xmlns:pip="http://nrg.wustl.edu/pipeline">
+	<pip:name>rhof</pip:name>
+	<pip:location>%HOF_HOME%</pip:location>
+	<pip:type>Executable</pip:type>
+	<pip:description>HOF main control script for docker-io vm</pip:description>
+	<pip:estimated_time>01:00:00</pip:estimated_time>
+	<pip:input>
+		<pip:argument id="command">
+			<pip:description>HOF command</pip:description>
+		</pip:argument>
+		<pip:argument id="arguments">
+			<pip:description>HOF command arguments</pip:description>
+		</pip:argument>
+	</pip:input>
+</pip:Resource>

@@ -1,0 +1,307 @@
+<script language="Javascript">
+	var scanIDs = new Array();
+	var selectedScanIDs = new Array();
+	var selectedScanDescrs = new Array();
+	var selectedHOF_IDs = new Array();
+	
+	var selectedInvalidScanIDs = new Array();
+	var selectedInvalidScanDescrs = new Array();
+
+//	console.info('console is working');
+	function checkScanner(checked)
+	{
+		var SiemScInput=document.getElementById("Siemens_scanner");
+		if(checked)
+			SiemScInput.value="1";
+		else
+			SiemScInput.value="0";
+	}
+	function populateScanIDs()
+	{
+		var checkboxName, selectName, checkbox, select,ischecked,selection,descrName,descr;
+		selectedScanIDs = [];
+		selectedHOF_IDs = [];
+		selectedScanDescrs = [];
+		selectedInvalidHOF_IDs = [];
+		
+		selectedInvalidScanIDs = [];
+		selectedInvalidScanDescrs = [];
+
+
+		for (var i=0; i<scanIDs.length; i++)
+		{
+			checkboxName='build_';
+			checkboxName=checkboxName.concat(scanIDs[i]);
+			checkbox=document.getElementById(checkboxName);
+			selectName='HOF_ID_';
+			selectName=selectName.concat(scanIDs[i]);
+			select=document.getElementById(selectName);
+			descrName='descr_';
+			descrName=descrName.concat(scanIDs[i]);
+			descr=document.getElementById(descrName).value;						
+			if (!select || !checkbox || !descr) continue;
+			if (!checkbox.checked) continue;
+			if (select.options[select.selectedIndex].text == "Select")
+			{
+				selectedInvalidScanIDs.push(scanIDs[i]);
+				selectedInvalidScanDescrs.push(descr);
+				continue;
+			}
+			selectedScanIDs.push(scanIDs[i]);
+			selectedHOF_IDs.push(select.options[select.selectedIndex].text);
+			selectedScanDescrs.push(descr);			
+		}
+	}
+	
+	//update pipeline arguments in html form.
+	function updatePipelineArgs()
+	{
+           var scanlist = document.getElementById("scans");
+           if (scanlist) 
+           {
+           	   var scans='';
+           	   for(var i=0; i<selectedScanIDs.length;i++)
+           	   {
+           	   		scans+=selectedScanIDs[i];
+           	   		if (i<selectedScanIDs.length-1)
+           	   		{
+           	   			scans+=',';
+           	   		}
+           	   }
+           	   scanlist.value=scans;
+//			   console.log('scanlist.value',scans);
+           }				
+           var hofidlist = document.getElementById("HOF_IDs");
+           if (hofidlist) 
+           {
+           	   var hofids='';
+           	   for(var i=0; i<selectedHOF_IDs.length;i++)
+           	   {
+           	   		hofids+=selectedHOF_IDs[i];
+           	   		if (i<selectedHOF_IDs.length-1) 
+           	   		{
+           	   			hofids+=',';
+           	   		}
+           	   }
+           	   hofidlist.value=hofids;
+//			   console.log('hofidlist.value',hofids);
+           }		   
+           var mparams = document.getElementById("ManualParamsText");
+           if (mparams)
+           {
+       			document.getElementById("ManualParams").value=mparams.value;
+           }
+           var checkVal=document.getElementById("ManualParams").value;
+           if (checkVal)
+           {
+           		if (checkVal.length<1) document.getElementById("ManualParams").value="none";           		
+           }
+           else
+           		document.getElementById("ManualParams").value="none";
+	}
+
+	//update buildable scan and HOF ID arrays when scans are selected/deselected.
+	function onChangeHOF_ID(scanID)
+	{
+		var checkboxName, selectName, checkbox, select,ischecked,selection;
+		checkboxName='build_';
+		checkboxName=checkboxName.concat(scanID);
+		checkbox=document.getElementById(checkboxName);
+		selectName='HOF_ID_';
+		selectName=selectName.concat(scanID);
+		select=document.getElementById(selectName);
+		if (!select || !checkbox) return;
+		selection=select.options[select.selectedIndex].text;
+		if(selection=="Select")
+		{
+			checkbox.checked=false;
+			checkbox.disabled=true;
+		}
+		else
+		{
+			checkbox.disabled=false;
+		}			
+	}
+	function validate()
+	{
+		populateScanIDs();
+//		console.info('exited populateScanIDs');
+		if (selectedScanIDs.length<2)
+		{
+			alert("Please select at least two scans.");
+			return false;
+		}
+		if (selectedInvalidScanIDs.length>0)
+		{
+			var err="Please either select a HOF ID for, or uncheck the following scans:\n";
+			for (var i=0; i<selectedInvalidScanIDs.length; i++)
+			{
+				err+=selectedInvalidScanIDs[i];
+				err+=": ";
+				err+=selectedInvalidScanDescrs[i];
+				err+="\n"
+			}
+			alert(err);
+			return false
+		}
+		
+		updatePipelineArgs();
+		var msg='Confirm your selection (scan, description, HOF ID):\n'
+		if (document.getElementById("Siemens_scanner").value == "1" )
+		{
+			msg+="Siemens scanner selected\n";
+		}
+		else
+		{
+			msg+="non-Siemens scanner selected\n";
+		}
+		msg+="Manual parameters: "
+		msg+=document.getElementById("ManualParams").value;
+		msg+="\n";
+		for (var i=0; i<selectedScanIDs.length; i++)
+		{
+			msg+=selectedScanIDs[i];
+			msg+=": ";
+			msg+=selectedScanDescrs[i];
+			msg+=", ";
+			msg+=selectedHOF_IDs[i];
+			msg+="\n"
+		}
+		return confirm(msg);
+	}
+
+</script>
+
+##Start of the HOF template.  
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+
+#set ($template = $data.getTemplateInfo())
+$!template.setLayoutTemplate("/Popup.vm")
+$page.setTitle("Heterogeneous Optimization Framework")
+$page.setLinkColor($ui.alink)
+$page.setVlinkColor($ui.vlink)
+#if ($data.message)
+    <DIV class="error">$data.message</DIV><br>
+#end
+<font face="$ui.sansSerifFonts">
+
+#set ($sessionId = $om.getLabel())
+
+<form name="HOFBuildOptions" method="post" action="$link.setAction("BuildAction")"  onsubmit="return validate();">
+Please set the parameters required for the HOF diffusion, perfusion and spatial registration processing of your study.
+<br/> <br/>
+<table>
+    <tr>
+        <td>
+            <b>
+                <font face="$ui.sansSerifFonts">
+                    Session: $sessionId
+                </font>
+            </b>
+        </td>
+        <td>
+            <b>
+                <font face="$ui.sansSerifFonts">
+                    Project: $om.getProject()
+                </font>
+            </b>
+        </td>
+    </tr>
+</table>
+<br/>
+
+##table showing all scans.
+<table border="0"  bordercolor="#CC3333">
+	#set ($Siemens_scanner = "Siemens_scanner")
+	<tr style="border-style:none">	
+		#set($checked = "")
+		#if ($projectSettings.get($Siemens_scanner).getCsvvalues() == "1")
+			#set($checked = "checked")
+			#set ($submit_val="1")
+		#else
+			#set($checked = "")
+			#set ($submit_val="0")			
+		#end		
+	  	<td colspan="3" align="left">
+	  		<input type="checkbox" id="Siemens_scanner_check" $checked onclick="checkScanner(this.checked)"/>Siemens scanner
+	  		<input type="hidden" id="Siemens_scanner" name="Siemens_scanner" value="$submit_val"/>
+	  	</td>
+  	</tr>  	
+  	<tr style="border-style: none">
+	  	<td colspan="4" align="left">
+	  		Override automatic parameters (advanced): <input type="text" id="ManualParamsText" name="ManualParamsText">	  		
+	  	</td>  	
+  	</tr>
+	<tr style="border-style:none">
+		<td style="border-style:none" align="left"><b>Scan</b></td>
+		<td style="border-style:none" align="left"><b>Description</b></td>
+		<td style="border-style:none" align="left"><b>Frames</b></td>
+    	<td style="border-style:none" align="left"><b>HOF Id</b></td>
+  	</tr>
+	#set ($scans=$mr.getScans_scan())
+	#foreach ($scan in $scans)	
+    	#set ($scanID = $scan.getId())
+		<script language="javascript">
+			scanIDs.push('$scanID');
+		</script>
+    	#set ($scanDescr = $scan.getSeriesDescription())
+		#if ($buildableScans.get($scanID))
+			#set ($scanlibID = $buildableScans.get($scanID))
+		#else
+			#set ($scanlibID = false)
+		#end
+		#set ($scanFrames = $scan.getFrames())
+		
+    	#if ($scanlibID)
+    		#set($checked="checked")
+			#set ($disabled="")
+    		#set($select_selected="selected")
+    	#else
+    		#set($checked="")
+			#set($disabled="disabled")
+    		#set($select_selected="")    	
+    	#end
+		<tr style="border-style:none">
+			##all scans, check if HOF id is resolved.				
+			<td style="border-style:none" align="left">
+				<input type="checkbox" id="build_${scanID}" $checked/>$scanID
+				<input type="hidden" id="descr_${scanID}" value="$scanDescr"/>
+			</td>
+			<td style="border-style:none" align="left">$scanDescr</td>
+			<td style="border-style:none" align="left">$scanFrames</td>
+			<td style="border-style:none" align="left">
+
+				<select id="HOF_ID_${scanID}">
+<!--				onChange="onChangeHOF_ID('$scanID')">			-->
+					<option value="select" $select_selected>Select</option>
+					#set ($selected = "")
+						#foreach ($id in $HOF_IDs)
+							#set ($selected="")
+							#if ($scanlibID == $id)
+								#set ($selected = "selected")
+							#end
+							<option value="$id" $selected>$id</option>
+						#end
+				</select>
+			</td>
+		</tr>
+	#end
+</table>
+<span id="pipeline_params">
+##pipeline parameters populated by validate() called by onSubmit(). 
+       <input type="hidden" id="scans" name="scans">
+       <input type="hidden" id="HOF_IDs" name="HOF_IDs">
+	   <input type="hidden" id="ManualParams" name="ManualParams">
+</span>
+
+#xdatPassItemFormFields($search_element $search_field $search_value $project)
+	<input type="hidden" name="pipelinename" value="HOF/HOF.xml">
+	<input type="hidden" name="cmdprefix" value="arc-grid-queue">
+#insertCustomPipelineNotification("process")
+
+<input type="submit" id="submitBtn" value="Run processing"  name="eventSubmit_doHofanalysis"/>
+                &nbsp;&nbsp;
+<input type="button" ONCLICK="javascript:self.close()" value="Close"/>
+<p>&nbsp;</p>
+</form>
